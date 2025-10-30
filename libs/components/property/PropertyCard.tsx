@@ -15,7 +15,6 @@ import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 interface PropertyCardType {
 	property: Property;
 	likePropertyHandler?: any;
-	myFavorites?: boolean;
 	recentlyVisited?: boolean;
 }
 
