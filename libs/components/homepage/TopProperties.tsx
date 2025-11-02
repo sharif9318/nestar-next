@@ -29,7 +29,7 @@ const TopProperties = (props: TopPropertiesProps) => {
 	const [likeTargetProperty] = useMutation(LIKE_TARGET_PROPERTY);
 
 	const {
-		loading: getPropertiesLoading,
+		// loading: getPropertiesLoading,
 		data: getPropertiesData,
 		error: getPropertiesError,
 		refetch: getPropertiesRefetch,

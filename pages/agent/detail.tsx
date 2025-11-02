@@ -175,7 +175,7 @@ const AgentDetail: NextPage = ({ initialInput, initialComment, ...props }: any) 
 
 			await likeTargetProperty({
 				variables: {
-					id,
+					input: id,
 				},
 			});
 			await getPropertiesRefetch({ input: searchFilter });
