@@ -16,6 +16,7 @@ interface PropertyCardType {
 	property: Property;
 	likePropertyHandler?: any;
 	recentlyVisited?: boolean;
+	myFavorites?: boolean;
 }
 
 const PropertyCard = (props: PropertyCardType) => {
