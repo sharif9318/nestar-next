@@ -43,3 +43,5 @@ export const likeTargetMemberHandler = async (likeTargetMember: any, id: string)
 		sweetMixinErrorAlert(err.message).then();
 	}
 };
+
+export const isValidObjectId = (id?: string) => /^[0-9a-fA-F]{24}$/.test(String(id ?? ''));
