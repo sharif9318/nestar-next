@@ -328,3 +328,67 @@ export const UNSUBSCRIBE = gql`
 		}
 	}
 `;
+
+/**************************
+ *            CS          *
+ *************************/
+
+export const CREATE_CS = gql`
+	mutation CreateCs($input: CsInput!) {
+		createCs(input: $input) {
+			_id
+			csStatus
+			csType
+			csCategory
+			csTitle
+			csContent
+			csEvent
+			inquiryStatus
+			memberId
+			csAnswer
+			answeredAt
+			createdAt
+			updatedAt
+		}
+	}
+`;
+
+export const UPDATE_CS = gql`
+	mutation UpdateCs($input: CsUpdate!) {
+		updateCs(input: $input) {
+			_id
+			csStatus
+			csType
+			csCategory
+			csTitle
+			csContent
+			csEvent
+			inquiryStatus
+			memberId
+			csAnswer
+			answeredAt
+			createdAt
+			updatedAt
+		}
+	}
+`;
+
+export const REMOVE_CS = gql`
+	mutation RemoveCs($csId: String!) {
+		removeCs(csId: $csId) {
+			_id
+			csStatus
+			csType
+			csCategory
+			csTitle
+			csContent
+			csEvent
+			inquiryStatus
+			memberId
+			csAnswer
+			answeredAt
+			createdAt
+			updatedAt
+		}
+	}
+`;

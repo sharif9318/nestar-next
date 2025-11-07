@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { NextPage } from 'next';
+import { useRouter } from 'next/router';
 import withAdminLayout from '../../../libs/components/layout/LayoutAdmin';
 import { Box, Button, InputAdornment, Stack } from '@mui/material';
 import { List, ListItem } from '@mui/material';
@@ -14,7 +15,8 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import { FaqArticlesPanelList } from '../../../libs/components/admin/cs/FaqList';
 
-const FaqArticles: NextPage = (props: any) => {
+const FaqArticles: NextPage = () => {
+	const router = useRouter();
 	const [anchorEl, setAnchorEl] = useState<[] | HTMLElement[]>([]);
 
 	/** APOLLO REQUESTS **/
@@ -30,7 +32,7 @@ const FaqArticles: NextPage = (props: any) => {
 					className="btn_add"
 					variant={'contained'}
 					size={'medium'}
-					// onClick={() => router.push(`/_admin/cs/faq_create`)}
+					onClick={() => router.push(`/_admin/cs/faq_create`)}
 				>
 					<AddRoundedIcon sx={{ mr: '8px' }} />
 					ADD
@@ -99,13 +101,8 @@ const FaqArticles: NextPage = (props: any) => {
 							<Divider />
 						</Box>
 						<FaqArticlesPanelList
-							// dense={dense}
-							// membersData={membersData}
-							// searchMembers={searchMembers}
-							anchorEl={anchorEl}
-							// handleMenuIconClick={handleMenuIconClick}
-							// handleMenuIconClose={handleMenuIconClose}
-							// generateMentorTypeHandle={generateMentorTypeHandle}
+						// dense={dense}
+						// searchFaqs={searchFaqs}
 						/>
 
 						<TablePagination

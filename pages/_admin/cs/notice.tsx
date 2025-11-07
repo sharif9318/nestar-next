@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { NextPage } from 'next';
+import { useRouter } from 'next/router';
 import withAdminLayout from '../../../libs/components/layout/LayoutAdmin';
 import { Box, Button, InputAdornment, Stack } from '@mui/material';
 import { List, ListItem } from '@mui/material';
@@ -14,7 +15,8 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import { NoticeList } from '../../../libs/components/admin/cs/NoticeList';
 
-const AdminNotice: NextPage = (props: any) => {
+const AdminNotice: NextPage = () => {
+	const router = useRouter();
 	const [anchorEl, setAnchorEl] = useState<[] | HTMLElement[]>([]);
 
 	/** APOLLO REQUESTS **/
@@ -30,7 +32,7 @@ const AdminNotice: NextPage = (props: any) => {
 					className="btn_add"
 					variant={'contained'}
 					size={'medium'}
-					// onClick={() => router.push(`/_admin/cs/faq_create`)}
+					onClick={() => router.push(`/_admin/cs/notice_create`)}
 				>
 					<AddRoundedIcon sx={{ mr: '8px' }} />
 					ADD
@@ -98,15 +100,7 @@ const AdminNotice: NextPage = (props: any) => {
 							</Stack>
 							<Divider />
 						</Box>
-						<NoticeList
-							// dense={dense}
-							// membersData={membersData}
-							// searchMembers={searchMembers}
-							anchorEl={anchorEl}
-							// handleMenuIconClick={handleMenuIconClick}
-							// handleMenuIconClose={handleMenuIconClose}
-							// generateMentorTypeHandle={generateMentorTypeHandle}
-						/>
+						<NoticeList />
 
 						<TablePagination
 							rowsPerPageOptions={[20, 40, 60]}

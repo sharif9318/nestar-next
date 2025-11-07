@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import {
@@ -16,24 +16,19 @@ import {
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import { Stack } from '@mui/material';
+import { useMutation, useQuery } from '@apollo/client';
+import { GET_ALL_CS } from '../../../../apollo/admin/query';
+import { REMOVE_CS_BY_ADMIN } from '../../../../apollo/admin/mutation';
+import { CsType } from '../../../enums/cs.enum';
+import { sweetErrorHandling, sweetTopSmallSuccessAlert } from '../../../sweetAlert';
 
 interface Data {
 	category: string;
 	title: string;
 	writer: string;
 	date: string;
-	status: string;
+	action: string;
 	id?: string;
-}
-
-function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
-	if (b[orderBy] < a[orderBy]) {
-		return -1;
-	}
-	if (b[orderBy] > a[orderBy]) {
-		return 1;
-	}
-	return 0;
 }
 
 type Order = 'asc' | 'desc';
@@ -58,7 +53,6 @@ const headCells: readonly HeadCell[] = [
 		disablePadding: false,
 		label: 'TITLE',
 	},
-
 	{
 		id: 'writer',
 		numeric: true,
@@ -72,10 +66,10 @@ const headCells: readonly HeadCell[] = [
 		label: 'DATE',
 	},
 	{
-		id: 'status',
+		id: 'action',
 		numeric: false,
 		disablePadding: false,
-		label: 'STATUS',
+		label: 'ACTION',
 	},
 ];
 
@@ -110,29 +104,81 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 
 interface FaqArticlesPanelListType {
 	dense?: boolean;
-	membersData?: any;
-	searchMembers?: any;
-	anchorEl?: any;
-	handleMenuIconClick?: any;
-	handleMenuIconClose?: any;
-	generateMentorTypeHandle?: any;
+	faqData?: any;
+	searchFaqs?: any;
 }
 
 export const FaqArticlesPanelList = (props: FaqArticlesPanelListType) => {
-	const {
-		dense,
-		membersData,
-		searchMembers,
-		anchorEl,
-		handleMenuIconClick,
-		handleMenuIconClose,
-		generateMentorTypeHandle,
-	} = props;
+	const { dense, searchFaqs } = props;
 	const router = useRouter();
+	const [faqList, setFaqList] = useState<any[]>([]);
 
 	/** APOLLO REQUESTS **/
+	const {
+		loading: getFaqsLoading,
+		data: getFaqsData,
+		error: getFaqsError,
+		refetch: getFaqsRefetch,
+	} = useQuery(GET_ALL_CS, {
+		fetchPolicy: 'network-only',
+		variables: {
+			input: {
+				page: 1,
+				limit: 10,
+				sort: 'createdAt',
+				direction: 'DESC',
+				search: {
+					csType: CsType.FAQ,
+					...searchFaqs,
+				},
+			},
+		},
+		notifyOnNetworkStatusChange: true,
+		onCompleted: (data) => {
+			setFaqList(data?.getAllCs?.list || []);
+		},
+	});
+
+	const [removeCsByAdmin] = useMutation(REMOVE_CS_BY_ADMIN);
+
 	/** LIFECYCLES **/
+	useEffect(() => {
+		if (searchFaqs) {
+			getFaqsRefetch({
+				input: {
+					page: 1,
+					limit: 10,
+					sort: 'createdAt',
+					direction: 'DESC',
+					search: {
+						csType: CsType.FAQ,
+						...searchFaqs,
+					},
+				},
+			});
+		}
+	}, [searchFaqs]);
+
 	/** HANDLERS **/
+	const handleEditClick = (faqId: string) => {
+		router.push(`/_admin/cs/faq_create?id=${faqId}`);
+	};
+
+	const handleDeleteClick = async (faqId: string) => {
+		try {
+			if (confirm('Are you sure you want to delete this FAQ?')) {
+				await removeCsByAdmin({
+					variables: {
+						csId: faqId,
+					},
+				});
+				await sweetTopSmallSuccessAlert('FAQ deleted successfully!', 800);
+				getFaqsRefetch();
+			}
+		} catch (err) {
+			sweetErrorHandling(err).then();
+		}
+	};
 
 	return (
 		<Stack>
@@ -141,55 +187,30 @@ export const FaqArticlesPanelList = (props: FaqArticlesPanelListType) => {
 					{/*@ts-ignore*/}
 					<EnhancedTableHead />
 					<TableBody>
-						{[1, 2, 3, 4, 5].map((ele: any, index: number) => {
-							const member_image = '/img/profile/defaultUser.svg';
-
-							let status_class_name = '';
+						{faqList?.map((faq: any, index: number) => {
+							const member_image = faq?.memberData?.memberImage || '/img/profile/defaultUser.svg';
 
 							return (
-								<TableRow hover key={'member._id'} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-									<TableCell align="left">mb id</TableCell>
-									<TableCell align="left">member.mb_full_name</TableCell>
+								<TableRow hover key={faq._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+									<TableCell align="left">{faq.csCategory}</TableCell>
+									<TableCell align="left">
+										<Link href={`/_admin/cs/faq_create?id=${faq._id}`}>
+											<div className={'title-cell'}>{faq.csTitle}</div>
+										</Link>
+									</TableCell>
 									<TableCell align="left" className={'name'}>
-										<Stack direction={'row'}>
-											<Link href={`/_admin/users/detail?mb_id=$'{member._id'}`}>
-												<div>
-													<Avatar alt="Remy Sharp" src={member_image} sx={{ ml: '2px', mr: '10px' }} />
-												</div>
-											</Link>
-											<Link href={`/_admin/users/detail?mb_id=${'member._id'}`}>
-												<div>member.mb_nick</div>
-											</Link>
+										<Stack direction={'row'} alignItems={'center'}>
+											<Avatar alt={faq?.memberData?.memberNick} src={member_image} sx={{ ml: '2px', mr: '10px' }} />
+											<div>{faq?.memberData?.memberNick || 'Unknown'}</div>
 										</Stack>
 									</TableCell>
-									<TableCell align="left">member.mb_phone</TableCell>
+									<TableCell align="left">
+										{faq.createdAt ? new Date(faq.createdAt).toLocaleDateString() : '-'}
+									</TableCell>
 									<TableCell align="center">
-										<Button onClick={(e: any) => handleMenuIconClick(e, index)} className={'badge success'}>
-											member.mb_type
+										<Button onClick={() => handleEditClick(faq._id)} className={'badge primary'}>
+											Edit
 										</Button>
-
-										<Menu
-											className={'menu-modal'}
-											MenuListProps={{
-												'aria-labelledby': 'fade-button',
-											}}
-											anchorEl={anchorEl[index]}
-											open={Boolean(anchorEl[index])}
-											onClose={handleMenuIconClose}
-											TransitionComponent={Fade}
-											sx={{ p: 1 }}
-										>
-											<MenuItem onClick={(e) => generateMentorTypeHandle('member._id', 'mentor', 'originate')}>
-												<Typography variant={'subtitle1'} component={'span'}>
-													MENTOR
-												</Typography>
-											</MenuItem>
-											<MenuItem onClick={(e) => generateMentorTypeHandle('member._id', 'user', 'remove')}>
-												<Typography variant={'subtitle1'} component={'span'}>
-													USER
-												</Typography>
-											</MenuItem>
-										</Menu>
 									</TableCell>
 								</TableRow>
 							);

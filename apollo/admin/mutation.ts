@@ -153,3 +153,47 @@ export const REMOVE_COMMENT_BY_ADMIN = gql`
 		}
 	}
 `;
+
+/**************************
+ *            CS          *
+ *************************/
+
+export const UPDATE_CS_BY_ADMIN = gql`
+	mutation UpdateCsByAdmin($input: CsUpdate!) {
+		updateCsByAdmin(input: $input) {
+			_id
+			csStatus
+			csType
+			csCategory
+			csTitle
+			csContent
+			csEvent
+			inquiryStatus
+			memberId
+			csAnswer
+			answeredAt
+			createdAt
+			updatedAt
+		}
+	}
+`;
+
+export const REMOVE_CS_BY_ADMIN = gql`
+	mutation RemoveCsByAdmin($csId: String!) {
+		removeCsByAdmin(csId: $csId) {
+			_id
+			csStatus
+			csType
+			csCategory
+			csTitle
+			csContent
+			csEvent
+			inquiryStatus
+			memberId
+			csAnswer
+			answeredAt
+			createdAt
+			updatedAt
+		}
+	}
+`;

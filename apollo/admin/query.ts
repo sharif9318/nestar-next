@@ -195,3 +195,55 @@ export const GET_COMMENTS = gql`
 		}
 	}
 `;
+
+/**************************
+ *            CS          *
+ *************************/
+
+export const GET_ALL_CS = gql`
+	query GetAllCs($input: AllCsInquiry!) {
+		getAllCs(input: $input) {
+			list {
+				_id
+				csStatus
+				csType
+				csCategory
+				csTitle
+				csContent
+				csEvent
+				inquiryStatus
+				memberId
+				csAnswer
+				answeredAt
+				createdAt
+				updatedAt
+				memberData {
+					_id
+					memberType
+					memberStatus
+					memberAuthType
+					memberPhone
+					memberNick
+					memberFullName
+					memberImage
+					memberAddress
+					memberDesc
+					memberWarnings
+					memberBlocks
+					memberProperties
+					memberRank
+					memberPoints
+					memberLikes
+					memberViews
+					deletedAt
+					createdAt
+					updatedAt
+					accessToken
+				}
+			}
+			metaCounter {
+				total
+			}
+		}
+	}
+`;

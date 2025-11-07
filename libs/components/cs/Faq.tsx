@@ -1,4 +1,4 @@
-import React, { SyntheticEvent, useState } from 'react';
+import React, { SyntheticEvent, useState, useEffect } from 'react';
 import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
 import { AccordionDetails, Box, Stack, Typography } from '@mui/material';
 import MuiAccordionSummary, { AccordionSummaryProps } from '@mui/material/AccordionSummary';
@@ -6,6 +6,9 @@ import { useRouter } from 'next/router';
 import { styled } from '@mui/material/styles';
 import useDeviceDetect from '../../hooks/useDeviceDetect';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import { useQuery } from '@apollo/client';
+import { GET_CS_LIST } from '../../../apollo/user/query';
+import { CsType, CsCategory } from '../../enums/cs.enum';
 
 const Accordion = styled((props: AccordionProps) => <MuiAccordion disableGutters elevation={0} square {...props} />)(
 	({ theme }) => ({
@@ -33,12 +36,58 @@ const AccordionSummary = styled((props: AccordionSummaryProps) => (
 const Faq = () => {
 	const device = useDeviceDetect();
 	const router = useRouter();
-	const [category, setCategory] = useState<string>('property');
+	const [category, setCategory] = useState<string>('PROPERTY');
 	const [expanded, setExpanded] = useState<string | false>('panel1');
+	const [faqData, setFaqData] = useState<any>({});
 
 	/** APOLLO REQUESTS **/
+	const {
+		loading: getFaqsLoading,
+		data: getFaqsData,
+		error: getFaqsError,
+		refetch: getFaqsRefetch,
+	} = useQuery(GET_CS_LIST, {
+		fetchPolicy: 'cache-and-network',
+		variables: {
+			input: {
+				page: 1,
+				limit: 100,
+				sort: 'createdAt',
+				direction: 'DESC',
+				search: {
+					csType: CsType.FAQ,
+					csCategory: category as CsCategory,
+				},
+			},
+		},
+		notifyOnNetworkStatusChange: true,
+		onCompleted: (data) => {
+			const faqs = data?.getCsList?.list || [];
+			setFaqData((prev: any) => ({
+				...prev,
+				[category]: faqs,
+			}));
+		},
+	});
+
 	/** LIFECYCLES **/
-	
+	useEffect(() => {
+		if (category) {
+			getFaqsRefetch({
+				input: {
+					page: 1,
+					limit: 100,
+					sort: 'createdAt',
+					direction: 'DESC',
+					search: {
+						csType: CsType.FAQ,
+						csCategory: category as CsCategory,
+					},
+				},
+			});
+		}
+	}, [category]);
+
 	/** HANDLERS **/
 	const changeCategoryHandler = (category: string) => {
 		setCategory(category);
@@ -48,8 +97,9 @@ const Faq = () => {
 		setExpanded(newExpanded ? panel : false);
 	};
 
-	const data: any = {
-		property: [
+	// Fallback data for when API data is not available
+	const fallbackData: any = {
+		PROPERTY: [
 			{
 				id: '00f5a45ed8897f8090116a01',
 				subject: 'Are the properties displayed on the site reliable?',
@@ -101,7 +151,7 @@ const Faq = () => {
 				content: 'Our team can provide basic guidance and recommend legal professionals if needed.',
 			},
 		],
-		payment: [
+		PAYMENT: [
 			{
 				id: '00f5a45ed8897f8090116a02',
 				subject: 'How can I make the payment?',
@@ -158,7 +208,7 @@ const Faq = () => {
 					'Late payment penalties may apply depending on the terms of your agreement. Please refer to your contract or contact us for details.',
 			},
 		],
-		buyers: [
+		BUYERS: [
 			{
 				id: '00f5a45ed8897f8090116a03',
 				subject: 'What should buyers pay attention to?',
@@ -220,7 +270,7 @@ const Faq = () => {
 			},
 		],
 
-		agents: [
+		AGENTS: [
 			{
 				id: '00f5a45ed8897f8090116a04',
 				subject: 'What do I need to do if I want to become an agent?',
@@ -274,7 +324,7 @@ const Faq = () => {
 				content: 'Build relationships, provide exceptional service, seek referrals, and continuously improve skills.',
 			},
 		],
-		membership: [
+		MEMBERSHIP: [
 			{
 				id: '00f5a45ed8897f8090116a05',
 				subject: 'Do you have a membership service on your site?',
@@ -327,7 +377,7 @@ const Faq = () => {
 				content: 'Membership perks, including deals or discounts, are not available at this time.',
 			},
 		],
-		community: [
+		COMMUNITY: [
 			{
 				id: '00f5a45ed8897f8090116a06',
 				subject: 'What should I do if there is abusive or criminal behavior in the community section?',
@@ -379,7 +429,7 @@ const Faq = () => {
 				content: 'Yes, we have moderators.',
 			},
 		],
-		other: [
+		OTHER: [
 			{
 				id: '00f5a45ed8897f8090116a40',
 				subject: 'Who should I contact if I want to buy your site?',
@@ -440,78 +490,82 @@ const Faq = () => {
 			<Stack className={'faq-content'}>
 				<Box className={'categories'} component={'div'}>
 					<div
-						className={category === 'property' ? 'active' : ''}
+						className={category === 'PROPERTY' ? 'active' : ''}
 						onClick={() => {
-							changeCategoryHandler('property');
+							changeCategoryHandler('PROPERTY');
 						}}
 					>
 						Property
 					</div>
 					<div
-						className={category === 'payment' ? 'active' : ''}
+						className={category === 'PAYMENT' ? 'active' : ''}
 						onClick={() => {
-							changeCategoryHandler('payment');
+							changeCategoryHandler('PAYMENT');
 						}}
 					>
 						Payment
 					</div>
 					<div
-						className={category === 'buyers' ? 'active' : ''}
+						className={category === 'BUYERS' ? 'active' : ''}
 						onClick={() => {
-							changeCategoryHandler('buyers');
+							changeCategoryHandler('BUYERS');
 						}}
 					>
-						Foy Buyers
+						For Buyers
 					</div>
 					<div
-						className={category === 'agents' ? 'active' : ''}
+						className={category === 'AGENTS' ? 'active' : ''}
 						onClick={() => {
-							changeCategoryHandler('agents');
+							changeCategoryHandler('AGENTS');
 						}}
 					>
 						For Agents
 					</div>
 					<div
-						className={category === 'membership' ? 'active' : ''}
+						className={category === 'MEMBERSHIP' ? 'active' : ''}
 						onClick={() => {
-							changeCategoryHandler('membership');
+							changeCategoryHandler('MEMBERSHIP');
 						}}
 					>
 						Membership
 					</div>
 					<div
-						className={category === 'community' ? 'active' : ''}
+						className={category === 'COMMUNITY' ? 'active' : ''}
 						onClick={() => {
-							changeCategoryHandler('community');
+							changeCategoryHandler('COMMUNITY');
 						}}
 					>
 						Community
 					</div>
 					<div
-						className={category === 'other' ? 'active' : ''}
+						className={category === 'OTHER' ? 'active' : ''}
 						onClick={() => {
-							changeCategoryHandler('other');
+							changeCategoryHandler('OTHER');
 						}}
 					>
 						Other
 					</div>
 				</Box>
 				<Box className={'wrap'} component={'div'}>
-					{data[category] &&
-						data[category].map((ele: any) => (
-							<Accordion expanded={expanded === ele?.id} onChange={handleChange(ele?.id)} key={ele?.subject}>
+					{(faqData[category] || fallbackData[category]) &&
+						(faqData[category] || fallbackData[category]).map((ele: any) => (
+							<Accordion
+								expanded={expanded === (ele?._id || ele?.id)}
+								onChange={handleChange(ele?._id || ele?.id)}
+								key={ele?._id || ele?.id}
+							>
 								<AccordionSummary id="panel1d-header" className="question" aria-controls="panel1d-content">
 									<Typography className="badge" variant={'h4'}>
 										Q
 									</Typography>
-									<Typography> {ele?.subject}</Typography>
+									<Typography> {ele?.csTitle || ele?.subject}</Typography>
 								</AccordionSummary>
 								<AccordionDetails>
 									<Stack className={'answer flex-box'}>
 										<Typography className="badge" variant={'h4'} color={'primary'}>
 											A
 										</Typography>
-										<Typography> {ele?.content}</Typography>
+										<Typography> {ele?.csContent || ele?.content}</Typography>
 									</Stack>
 								</AccordionDetails>
 							</Accordion>

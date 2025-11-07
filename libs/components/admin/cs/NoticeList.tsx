@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import {
@@ -22,6 +22,11 @@ import Typography from '@mui/material/Typography';
 import { Stack } from '@mui/material';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import { NotePencil } from 'phosphor-react';
+import { useMutation, useQuery } from '@apollo/client';
+import { GET_ALL_CS } from '../../../../apollo/admin/query';
+import { REMOVE_CS_BY_ADMIN } from '../../../../apollo/admin/mutation';
+import { CsType } from '../../../enums/cs.enum';
+import { sweetErrorHandling, sweetTopSmallSuccessAlert } from '../../../sweetAlert';
 
 type Order = 'asc' | 'desc';
 
@@ -167,29 +172,80 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
 
 interface NoticeListType {
 	dense?: boolean;
-	membersData?: any;
-	searchMembers?: any;
-	anchorEl?: any;
-	handleMenuIconClick?: any;
-	handleMenuIconClose?: any;
-	generateMentorTypeHandle?: any;
+	searchNotices?: any;
 }
 
 export const NoticeList = (props: NoticeListType) => {
-	const {
-		dense,
-		membersData,
-		searchMembers,
-		anchorEl,
-		handleMenuIconClick,
-		handleMenuIconClose,
-		generateMentorTypeHandle,
-	} = props;
+	const { dense, searchNotices } = props;
 	const router = useRouter();
+	const [noticeList, setNoticeList] = useState<any[]>([]);
 
 	/** APOLLO REQUESTS **/
+	const {
+		loading: getNoticesLoading,
+		data: getNoticesData,
+		error: getNoticesError,
+		refetch: getNoticesRefetch,
+	} = useQuery(GET_ALL_CS, {
+		fetchPolicy: 'network-only',
+		variables: {
+			input: {
+				page: 1,
+				limit: 10,
+				sort: 'createdAt',
+				direction: 'DESC',
+				search: {
+					csType: CsType.NOTICE,
+					...searchNotices,
+				},
+			},
+		},
+		notifyOnNetworkStatusChange: true,
+		onCompleted: (data) => {
+			setNoticeList(data?.getAllCs?.list || []);
+		},
+	});
+
+	const [removeCsByAdmin] = useMutation(REMOVE_CS_BY_ADMIN);
+
 	/** LIFECYCLES **/
+	useEffect(() => {
+		if (searchNotices) {
+			getNoticesRefetch({
+				input: {
+					page: 1,
+					limit: 10,
+					sort: 'createdAt',
+					direction: 'DESC',
+					search: {
+						csType: CsType.NOTICE,
+						...searchNotices,
+					},
+				},
+			});
+		}
+	}, [searchNotices]);
+
 	/** HANDLERS **/
+	const handleEditClick = (noticeId: string) => {
+		router.push(`/_admin/cs/notice_create?id=${noticeId}`);
+	};
+
+	const handleDeleteClick = async (noticeId: string) => {
+		try {
+			if (confirm('Are you sure you want to delete this notice?')) {
+				await removeCsByAdmin({
+					variables: {
+						csId: noticeId,
+					},
+				});
+				await sweetTopSmallSuccessAlert('Notice deleted successfully!', 800);
+				getNoticesRefetch();
+			}
+		} catch (err) {
+			sweetErrorHandling(err).then();
+		}
+	};
 
 	return (
 		<Stack>
@@ -198,39 +254,39 @@ export const NoticeList = (props: NoticeListType) => {
 					{/*@ts-ignore*/}
 					<EnhancedTableToolbar />
 					<TableBody>
-						{[1, 2, 3, 4, 5].map((ele: any, index: number) => {
-							const member_image = '/img/profile/defaultUser.svg';
+						{noticeList?.map((notice: any, index: number) => {
+							const member_image = notice?.memberData?.memberImage || '/img/profile/defaultUser.svg';
 
 							return (
-								<TableRow hover key={'member._id'} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+								<TableRow hover key={notice._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
 									<TableCell padding="checkbox">
 										<Checkbox color="primary" />
 									</TableCell>
-									<TableCell align="left">mb id</TableCell>
-									<TableCell align="left">member.mb_full_name</TableCell>
-									<TableCell align="left">member.mb_phone</TableCell>
+									<TableCell align="left">{notice.csCategory}</TableCell>
+									<TableCell align="left">
+										<Link href={`/_admin/cs/notice_create?id=${notice._id}`}>
+											<div className={'title-cell'}>{notice.csTitle}</div>
+										</Link>
+									</TableCell>
+									<TableCell align="left">{notice._id.slice(-6)}</TableCell>
 									<TableCell align="left" className={'name'}>
-										<Stack direction={'row'}>
-											<Link href={`/_admin/users/detail?mb_id=$'{member._id'}`}>
-												<div>
-													<Avatar alt="Remy Sharp" src={member_image} sx={{ ml: '2px', mr: '10px' }} />
-												</div>
-											</Link>
-											<Link href={`/_admin/users/detail?mb_id=${'member._id'}`}>
-												<div>member.mb_nick</div>
-											</Link>
+										<Stack direction={'row'} alignItems={'center'}>
+											<Avatar alt={notice?.memberData?.memberNick} src={member_image} sx={{ ml: '2px', mr: '10px' }} />
+											<div>{notice?.memberData?.memberNick || 'Admin'}</div>
 										</Stack>
 									</TableCell>
-									<TableCell align="left">member.mb_phone</TableCell>
-									<TableCell align="left">member.mb_phone</TableCell>
+									<TableCell align="left">
+										{notice.createdAt ? new Date(notice.createdAt).toLocaleDateString() : '-'}
+									</TableCell>
+									<TableCell align="left">{notice.csEvent ? 'Event' : 'Normal'}</TableCell>
 									<TableCell align="right">
 										<Tooltip title={'delete'}>
-											<IconButton>
+											<IconButton onClick={() => handleDeleteClick(notice._id)}>
 												<DeleteRoundedIcon />
 											</IconButton>
 										</Tooltip>
 										<Tooltip title="edit">
-											<IconButton onClick={() => router.push(`/_admin/cs/notice_create?id=notice._id`)}>
+											<IconButton onClick={() => handleEditClick(notice._id)}>
 												<NotePencil size={24} weight="fill" />
 											</IconButton>
 										</Tooltip>
