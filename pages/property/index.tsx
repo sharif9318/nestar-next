@@ -59,9 +59,8 @@ const PropertyList: NextPage = ({ initialInput, ...props }: any) => {
 		if (router.query.input) {
 			const inputObj = JSON.parse(router?.query?.input as string);
 			setSearchFilter(inputObj);
+			setCurrentPage(inputObj.page || 1);
 		}
-
-		setCurrentPage(searchFilter.page === undefined ? 1 : searchFilter.page);
 	}, [router]);
 
 	useEffect(() => {
