@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { NextPage } from 'next';
+import { useMutation, useQuery } from '@apollo/client';
 import withAdminLayout from '../../../libs/components/layout/LayoutAdmin';
 import { Box, List, ListItem, Stack } from '@mui/material';
 import Typography from '@mui/material/Typography';
@@ -14,6 +15,9 @@ import { Property } from '../../../libs/types/property/property';
 import { PropertyLocation, PropertyStatus } from '../../../libs/enums/property.enum';
 import { sweetConfirmAlert, sweetErrorHandling } from '../../../libs/sweetAlert';
 import { PropertyUpdate } from '../../../libs/types/property/property.update';
+import { GET_ALL_PROPERTIES_BY_ADMIN } from '../../../apollo/admin/query';
+import { UPDATE_PROPERTY_BY_ADMIN, REMOVE_PROPERTY_BY_ADMIN } from '../../../apollo/admin/mutation';
+import { T } from '../../../libs/types/common';
 
 const AdminProperties: NextPage = ({ initialInquiry, ...props }: any) => {
 	const [anchorEl, setAnchorEl] = useState<[] | HTMLElement[]>([]);
@@ -26,19 +30,40 @@ const AdminProperties: NextPage = ({ initialInquiry, ...props }: any) => {
 	const [searchType, setSearchType] = useState('ALL');
 
 	/** APOLLO REQUESTS **/
+	const [updatePropertyByAdmin] = useMutation(UPDATE_PROPERTY_BY_ADMIN);
+	const [removePropertyByAdmin] = useMutation(REMOVE_PROPERTY_BY_ADMIN);
+
+	const {
+		loading: getAllPropertiesByAdminLoading,
+		data: getAllPropertiesByAdminData,
+		error: getAllPropertiesByAdminError,
+		refetch: getAllPropertiesRefetch,
+	} = useQuery(GET_ALL_PROPERTIES_BY_ADMIN, {
+		fetchPolicy: 'network-only',
+		variables: { input: propertiesInquiry },
+		notifyOnNetworkStatusChange: true,
+		onCompleted: (data: T) => {
+			setProperties(data?.getAllPropertiesByAdmin?.list);
+			setPropertiesTotal(data?.getAllPropertiesByAdmin?.metaCounter[0]?.total ?? 0);
+		},
+	});
 
 	/** LIFECYCLES **/
-	useEffect(() => {}, [propertiesInquiry]);
+	useEffect(() => {
+		getAllPropertiesRefetch({ input: propertiesInquiry });
+	}, [propertiesInquiry]);
 
 	/** HANDLERS **/
 	const changePageHandler = async (event: unknown, newPage: number) => {
 		propertiesInquiry.page = newPage + 1;
+		await getAllPropertiesRefetch({ input: propertiesInquiry });
 		setPropertiesInquiry({ ...propertiesInquiry });
 	};
 
 	const changeRowsPerPageHandler = async (event: React.ChangeEvent<HTMLInputElement>) => {
 		propertiesInquiry.limit = parseInt(event.target.value, 10);
 		propertiesInquiry.page = 1;
+		await getAllPropertiesRefetch({ input: propertiesInquiry });
 		setPropertiesInquiry({ ...propertiesInquiry });
 	};
 
@@ -77,8 +102,15 @@ const AdminProperties: NextPage = ({ initialInquiry, ...props }: any) => {
 	const removePropertyHandler = async (id: string) => {
 		try {
 			if (await sweetConfirmAlert('Are you sure to remove?')) {
+				await removePropertyByAdmin({
+					variables: {
+						input: id,
+					},
+				});
+
+				menuIconCloseHandler();
+				await getAllPropertiesRefetch({ input: propertiesInquiry });
 			}
-			menuIconCloseHandler();
 		} catch (err: any) {
 			sweetErrorHandling(err).then();
 		}
@@ -109,8 +141,14 @@ const AdminProperties: NextPage = ({ initialInquiry, ...props }: any) => {
 
 	const updatePropertyHandler = async (updateData: PropertyUpdate) => {
 		try {
-			console.log('+updateData: ', updateData);
+			await updatePropertyByAdmin({
+				variables: {
+					input: updateData,
+				},
+			});
+
 			menuIconCloseHandler();
+			await getAllPropertiesRefetch({ input: propertiesInquiry });
 		} catch (err: any) {
 			menuIconCloseHandler();
 			sweetErrorHandling(err).then();
@@ -128,28 +166,28 @@ const AdminProperties: NextPage = ({ initialInquiry, ...props }: any) => {
 						<Box component={'div'}>
 							<List className={'tab-menu'}>
 								<ListItem
-									onClick={(e) => tabChangeHandler(e, 'ALL')}
+									onClick={(e: any) => tabChangeHandler(e, 'ALL')}
 									value="ALL"
 									className={value === 'ALL' ? 'li on' : 'li'}
 								>
 									All
 								</ListItem>
 								<ListItem
-									onClick={(e) => tabChangeHandler(e, 'ACTIVE')}
+									onClick={(e: any) => tabChangeHandler(e, 'ACTIVE')}
 									value="ACTIVE"
 									className={value === 'ACTIVE' ? 'li on' : 'li'}
 								>
 									Active
 								</ListItem>
 								<ListItem
-									onClick={(e) => tabChangeHandler(e, 'SOLD')}
+									onClick={(e: any) => tabChangeHandler(e, 'SOLD')}
 									value="SOLD"
 									className={value === 'SOLD' ? 'li on' : 'li'}
 								>
 									Sold
 								</ListItem>
 								<ListItem
-									onClick={(e) => tabChangeHandler(e, 'DELETE')}
+									onClick={(e: any) => tabChangeHandler(e, 'DELETE')}
 									value="DELETE"
 									className={value === 'DELETE' ? 'li on' : 'li'}
 								>
