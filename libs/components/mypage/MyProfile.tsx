@@ -108,8 +108,6 @@ const MyProfile: NextPage = ({ initialValues, ...props }: any) => {
 		}
 	};
 
-	console.log('+updateData', updateData);
-
 	if (device === 'mobile') {
 		return <>MY PROFILE PAGE MOBILE</>;
 	} else
